@@ -91,6 +91,23 @@ class Detector:
     def apply_gaussian(self, frame):
         return cv.medianBlur(frame, 3) # 3 is the kernel size and must be odd, not sure yet why opencv does that
     
+    def get_contour_blob(self, frame): # ensure frame is the masked one
+        contours, _ = cv.findContours(frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_TC89_L1)
+
+        detected = []
+
+        for contour in contours:
+            x,y,w,h = cv.boundingRect(contour)
+            area = w*h
+
+            # print(area)
+            if area > 5: # just abstract number based on the printed areas not sure it works
+                detected.append([x, y, x+w, y+h, area])
+        
+        detected = np.array(detected)
+        return detected
+
+    
 
     
     
