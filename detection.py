@@ -32,7 +32,7 @@ class Detector:
     
     # frame1 and frame2 should be gray images, here the code is written as such frame2 is considered "after" frame and 
     # "frame1" is considered "before". WARNING: Import to get the order right, or else you will get motion going the wrong
-    # way.
+    # way. WARNING: make sure frames are gray scale to make our lives easier for the GDP
     def difference(self, frame1, frame2):
         return cv.subtract(frame2, frame1)
     
@@ -53,7 +53,12 @@ class Detector:
 
         for i in range(len(frames) - 1):
             diff = self.difference(self.gray_frame(frames[i]), self.gray_frame(frames[i+1]))
+            diff = self.apply_gaussian(diff)
             differences.append(diff)
         return differences
+    
+    # Only use this function after difference is applied. WARNING: Expects gray scale image
+    def apply_gaussian(self, frame):
+        return cv.medianBlur(frame, 3)
     
     
