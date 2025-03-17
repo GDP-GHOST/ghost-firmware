@@ -16,14 +16,15 @@ def main():
     # Detection stuff
     
     detector = detection.Detector()
-    frames_to_analyse = frames[10:12]
+    frames_to_analyse = frames[10:14]
     before = time.perf_counter()
-    differences = detector.detect(frames_to_analyse)
+    differences, masks = detector.detect_across_multiple(frames_to_analyse)
     after = time.perf_counter()
     performance_time = after - before
     print(f'{Messages.LOG} Time taken to detect {len(frames_to_analyse)} frames: {performance_time:.6f} s')
 
-    plt.imshow(differences[0], cmap='bone') # cmap bone for black and white images
+    #plt.imshow(differences[0][0], cmap='bone') # cmap bone for black and white images
+    plt.imshow(masks[0], cmap='bone') # cmap bone for black and white images
     plt.show()
 
 main()

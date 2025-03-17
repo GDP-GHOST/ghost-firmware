@@ -50,15 +50,45 @@ class Detector:
             quit()
 
         differences = []
+        masks = []
 
         for i in range(len(frames) - 1):
             diff = self.difference(self.gray_frame(frames[i]), self.gray_frame(frames[i+1]))
             diff = self.apply_gaussian(diff)
+            mask = cv.adaptiveThreshold(diff, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 7, 3)
+            mask = self.apply_gaussian(mask)
             differences.append(diff)
-        return differences
+            masks.append(mask)
+
+        return differences, masks
+    
+    def detect_across_multiple(self, frames:list):
+        if len(frames) < 4:
+            print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 2.")
+            quit()
+
+        differences = []
+        masks = []
+
+        for i in range(len(frames) - 3):
+            diff_1 = self.difference(self.gray_frame(frames[i]), self.gray_frame(frames[i+1]))
+            diff_2 = self.difference(self.gray_frame(frames[i+2]), self.gray_frame(frames[i+3]))
+            diff = self.difference(diff_1, diff_2)
+
+            diff = self.apply_gaussian(diff)
+            mask = cv.adaptiveThreshold(diff, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 7, 3)
+            mask = self.apply_gaussian(mask)
+            mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, np.array((5, 5)), iterations=10)
+            differences.append(diff)
+            masks.append(mask)
+
+        return differences, masks
     
     # Only use this function after difference is applied. WARNING: Expects gray scale image
+    # TODO: THIS IS A APPLY MEDIAN not gaussian, whoops
     def apply_gaussian(self, frame):
         return cv.medianBlur(frame, 3)
+    
+
     
     
