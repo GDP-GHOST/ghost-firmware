@@ -1,3 +1,24 @@
+""" 
+    File: detection.py
+    Author: Gianluca Borgo (gbg20@soton.ac.uk)
+
+    Libraries: OpenCV (v4.10.0.84), Numpy (v2.0.1)
+    Python Version: 3.13.0
+
+    Program Version: 0.2 (according to new architecture)
+
+    Description: Detect objects based on light intensity and movement.
+
+    Instructions: File should act as a "API" as it is a bridge between the numerous algorithms applied. Functions such as detect()
+    are subject to change over time, so ensure that you have the most up-to-date version.
+
+    Each new version (merged into main) will increase the version counter.
+    
+    TODO: 
+        - Implement both reference frames moving detection. For now it works only if the camera is fixed.
+        
+"""
+
 import matplotlib.pyplot as plt
 import cv2 as cv
 import numpy as np
@@ -10,7 +31,8 @@ class Detector:
         pass
     
     # frame1 and frame2 should be gray images, here the code is written as such frame2 is considered "after" frame and 
-    # "frame1" is considered "before"
+    # "frame1" is considered "before". WARNING: Import to get the order right, or else you will get motion going the wrong
+    # way.
     def difference(self, frame1, frame2):
         return cv.subtract(frame2, frame1)
     
