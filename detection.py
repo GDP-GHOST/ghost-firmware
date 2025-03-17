@@ -18,3 +18,5 @@ class Detector:
         img_color = cv.cvtColor(frame, cv.COLOR_BGR2RGB)            
         img_gray = cv.cvtColor(img_color, cv.COLOR_RGB2GRAY)
         return img_gray
+    
+    
