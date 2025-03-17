@@ -2,11 +2,12 @@
 import os
 from util.constants import *
 import cv2 as cv
+from util.messages import *
 
 class Camera:
     def __init__(self):
         self.camera = None #placeholder
-        self.images = None
+        self.images = []
 
     # Worth noting that the folder in which these images are being taken from
     # are of frames, if using anything else might cause the rest of the algorithm to break.
@@ -14,6 +15,7 @@ class Camera:
         for file in self.get_file_list():
             frame = cv.imread(file)
             self.images.append(frame)
+        print(f'{Messages.SUCCESS} Initialised camera object')
 
     # Gets an ordered list of the files in the folder
     def get_file_list(self):

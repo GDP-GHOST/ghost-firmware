@@ -52,7 +52,7 @@ class Detector:
         differences = []
 
         for i in range(len(frames) - 1):
-            diff = self.difference(self.gray_frame(frames[i], frames[i+1]))
+            diff = self.difference(self.gray_frame(frames[i]), self.gray_frame(frames[i+1]))
             differences.append(diff)
         return differences
     
