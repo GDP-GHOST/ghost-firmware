@@ -23,7 +23,7 @@ def main():
     performance_time = after - before
     print(f'{Messages.LOG} Time taken to detect {len(frames_to_analyse)} frames: {performance_time:.6f} s')
 
-    plt.imshow(differences[0], cmap='bone')
+    plt.imshow(differences[0], cmap='bone') # cmap bone for black and white images
     plt.show()
 
 main()
