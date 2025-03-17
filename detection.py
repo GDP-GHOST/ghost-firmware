@@ -62,6 +62,7 @@ class Detector:
 
         return differences, masks
     
+    # TODO: Add choice to frames amount
     def detect_across_multiple(self, frames:list):
         if len(frames) < 4:
             print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 2.")
@@ -86,8 +87,9 @@ class Detector:
     
     # Only use this function after difference is applied. WARNING: Expects gray scale image
     # TODO: THIS IS A APPLY MEDIAN not gaussian, whoops
+    # TODO: Make so the 3 (kernel size) is passed as parameter
     def apply_gaussian(self, frame):
-        return cv.medianBlur(frame, 3)
+        return cv.medianBlur(frame, 3) # 3 is the kernel size and must be odd, not sure yet why opencv does that
     
 
     
