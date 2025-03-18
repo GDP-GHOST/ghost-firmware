@@ -2,7 +2,9 @@ import camera_manager
 import detection
 import matplotlib.pylab as plt
 from util.messages import *
+import cv2 as cv
 import time #debug purposes & performance tests
+from PIL import Image
 
 def main():
     # Camera stuff
@@ -16,15 +18,17 @@ def main():
     # Detection stuff
     
     detector = detection.Detector()
-    frames_to_analyse = frames[10:14]
+    frames_to_analyse = frames
     before = time.perf_counter()
-    differences, masks = detector.detect_across_multiple(frames_to_analyse)
+    masks = detector.detect_across_multiple(frames_to_analyse)
     after = time.perf_counter()
     performance_time = after - before
     print(f'{Messages.LOG} Time taken to detect {len(frames_to_analyse)} frames: {performance_time:.6f} s')
 
-    #plt.imshow(differences[0][0], cmap='bone') # cmap bone for black and white images
     plt.imshow(masks[0], cmap='bone') # cmap bone for black and white images
     plt.show()
+
+    blob_detection_frames = detector.get_blob_detections(frames_to_analyse)
+    #camera.create_gif(blob_detection_frames)
 
 main()

@@ -65,7 +65,7 @@ class Detector:
     # TODO: Add choice to frames amount
     def detect_across_multiple(self, frames:list):
         if len(frames) < 4:
-            print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 2.")
+            print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 4.")
             quit()
 
         differences = []
@@ -83,13 +83,42 @@ class Detector:
             differences.append(diff)
             masks.append(mask)
 
-        return differences, masks
+        return masks
     
     # Only use this function after difference is applied. WARNING: Expects gray scale image
     # TODO: THIS IS A APPLY MEDIAN not gaussian, whoops
     # TODO: Make so the 3 (kernel size) is passed as parameter
     def apply_gaussian(self, frame):
         return cv.medianBlur(frame, 3) # 3 is the kernel size and must be odd, not sure yet why opencv does that
+    
+    def get_contour_blob(self, frame): # ensure frame is the masked one
+        contours, _ = cv.findContours(frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_TC89_L1)
+
+        detected = []
+
+        for contour in contours:
+            x,y,w,h = cv.boundingRect(contour)
+            area = w*h
+
+            # print(area)
+            if area > 5: # just abstract number based on the printed areas not sure it works
+                detected.append([x, y, x+w, y+h, area])
+        
+        detected = np.array(detected)
+        return detected
+    
+    def get_blob_detections(self, frames):
+        masks = self.detect_across_multiple(frames)
+        colored_masks = []
+        for mask in masks:
+            blobs = self.get_contour_blob(mask)
+            mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
+            for box in blobs:
+                x1,y1,x2,y2,area = box
+                cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
+            colored_masks.append(mask_color)
+        return colored_masks
+
     
 
     
