@@ -106,6 +106,19 @@ class Detector:
         
         detected = np.array(detected)
         return detected
+    
+    def get_blob_detections(self, frames):
+        detections, masks = self.detect_across_multiple(frames)
+        colored_masks = []
+        for mask in masks:
+            blobs = self.get_contour_blob(mask)
+            mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
+            for box in blobs:
+                print(box)
+                x1,y1,x2,y2,area = box
+                cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
+            colored_masks.append(mask_color)
+        return colored_masks
 
     
 
