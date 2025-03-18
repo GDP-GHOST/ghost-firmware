@@ -29,6 +29,6 @@ def main():
     plt.show()
 
     blob_detection_frames = detector.get_blob_detections(frames_to_analyse)
-    camera.create_gif(blob_detection_frames)
+    #camera.create_gif(blob_detection_frames)
 
 main()
