@@ -65,7 +65,7 @@ class Detector:
     # TODO: Add choice to frames amount
     def detect_across_multiple(self, frames:list):
         if len(frames) < 4:
-            print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 2.")
+            print(f"{Messages.ERROR} Not enough frames given to detect. Need at least 4.")
             quit()
 
         differences = []
@@ -83,7 +83,7 @@ class Detector:
             differences.append(diff)
             masks.append(mask)
 
-        return differences, masks
+        return masks
     
     # Only use this function after difference is applied. WARNING: Expects gray scale image
     # TODO: THIS IS A APPLY MEDIAN not gaussian, whoops
@@ -108,13 +108,12 @@ class Detector:
         return detected
     
     def get_blob_detections(self, frames):
-        detections, masks = self.detect_across_multiple(frames)
+        masks = self.detect_across_multiple(frames)
         colored_masks = []
         for mask in masks:
             blobs = self.get_contour_blob(mask)
             mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
             for box in blobs:
-                print(box)
                 x1,y1,x2,y2,area = box
                 cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
             colored_masks.append(mask_color)

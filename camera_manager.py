@@ -3,6 +3,7 @@ import os
 from util.constants import *
 import cv2 as cv
 from util.messages import *
+from PIL import Image
 
 class Camera:
     def __init__(self):
@@ -26,3 +27,9 @@ class Camera:
     
     def get_images(self):
         return self.images
+    
+    def create_gif(self, frames):
+        gif = []
+        for img in frames:
+            gif.append(Image.fromarray(img))
+        gif[0].save('detect.gif', save_all=True,optimize=False, append_images=gif[1:], loop=0)
