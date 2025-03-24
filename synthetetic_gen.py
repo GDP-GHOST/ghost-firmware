@@ -33,7 +33,8 @@ class Generator:
                 #     position_x = position_start[0] + i
                 #     self.add_white_pixel(position_start, 1.0)
             case Shapes.RECTANGLE:
-                pass
+                cv.rectangle(self.generated_image, position_start, (position_start[0] + dimension_kernel[0], position_start[1] + dimension_kernel[1]), (255, 255, 255), -1)
+                # same code for rectangle since it was a rectanlge to begin with
             case Shapes.RANDOM:
                 pass
 
