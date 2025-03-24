@@ -34,7 +34,7 @@ def main():
     ################################
     gens = synthetetic_gen.Generator()
     gens.gen_blank_img((200, 200, 3))
-    gens.generate_object_screen((1, 1), (25, 25), Shapes.SQUARE)
+    gens.generate_object_screen((100, 100), (20, 20), Shapes.CIRCLE)
     plt.imshow(gens.get_generated_img())
     plt.show()
     #camera.create_gif(blob_detection_frames)

@@ -6,4 +6,5 @@ class Shapes:
     # TODO: Add more shapes
     SQUARE = 1
     RECTANGLE = 2
-    RANDOM = 3
+    CIRCLE = 3
+    RANDOM = 4

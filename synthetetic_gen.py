@@ -25,6 +25,7 @@ class Generator:
     # Dimension kernel is the "area" size in which the shape will appear in, everything limited to it. if shape is random, then
     # the intensities and pixel density will be randomised in that area. WARNING: too small like 2x2 pixel is VERY small
     # position start for squares and rectangle is from the conner and circles is from the centre, might change this later...
+    # TOOD: right now it is not used add white pixel, so there is no control over luminosity of the pixel. HARD coded for now, CHANGE THIS
     def generate_object_screen(self, position_start, dimension_kernel, shape:Shapes):
         match shape:
             case Shapes.SQUARE:
@@ -35,8 +36,8 @@ class Generator:
             case Shapes.RECTANGLE:
                 cv.rectangle(self.generated_image, position_start, (position_start[0] + dimension_kernel[0], position_start[1] + dimension_kernel[1]), (255, 255, 255), -1)
                 # same code for rectangle since it was a rectanlge to begin with
-            case Shapes.RANDOM:
-                pass
+            case Shapes.CIRCLE:
+                cv.circle(self.generated_image, position_start, dimension_kernel[0], (255, 255, 255), -1)
 
 
     def get_generated_img(self):
