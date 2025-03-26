@@ -1,6 +1,5 @@
 import camera_manager
 import detection
-import matplotlib.pylab as plt
 from util.messages import *
 import cv2 as cv
 import time #debug purposes & performance tests
@@ -12,7 +11,7 @@ def main():
     # CAMERA TEST TEMPLATE CODE form stakc overflow: 
     camera = camera_manager.Camera()
     camera.initialise()
-    # camera.preview()
+    #camera.preview()
     camera.video_without_preview()
 
 main()

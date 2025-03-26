@@ -22,7 +22,8 @@ class Camera:
     
     def initialise_camera(self):
         print(f"{Messages.LOG} Initialising the camera")
-        self.camera = cv.VideoCapture(CAMERA_ID)
+        self.camera = cv.VideoCapture(CAMERA_ID) # # WARNING ABOUT THIS NEEDS TO CHMOD the file /dev/video0 with 777 permission
+        print(self.camera.isOpened())
         if self.camera.isOpened():
             self.camera_enabled, frame = self.camera.read()
             print(f"{Messages.SUCCESS} Camera Initialised")
