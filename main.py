@@ -6,11 +6,10 @@ import time #debug purposes & performance tests
 from PIL import Image
 import synthetetic_gen
 from util.constants import *
+import motor_manager
 
 def main():
-    camera = camera_manager.Camera()
-    camera.initialise()
-    #camera.preview() # Camera preview only works if screen is enabled, opencv headless might cause some issues.
-    camera.video_without_preview()
+    controller = motor_manager.Motor()
+    controller.open_device()
 
 main()

@@ -3,7 +3,7 @@ IMAGE_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\Programming\Datas
 
 CAMERA_ID = 0 # on my laptop svbony is 1, but pi will probably be 0
 
-MOTOR_SO = 'EPOS_Linux_Library/libEposCmd.so.6.6.1.0' # This path will change on linux or windows, depends where you downloaded the maxon stuMTOff
+MOTOR_SO = 'C:\Program Files (x86)\maxon motor ag\EPOS IDX\EPOS4\04 Programming\Windows DLL\Microsoft Visual C++\Definition Files\EposCmd64.dll'#EPOS_Linux_Library/libEposCmd.so.6.6.1.0' # This path will change on linux or windows, depends where you downloaded the maxon stuMTOff
 MOTOR_NODE_ID = 29
 MOTOR_KEYHANDLE = 0
 MOTOR_RET = 0 
