@@ -8,10 +8,9 @@ import synthetetic_gen
 from util.constants import *
 
 def main():
-    # CAMERA TEST TEMPLATE CODE form stakc overflow: 
     camera = camera_manager.Camera()
     camera.initialise()
-    #camera.preview()
+    #camera.preview() # Camera preview only works if screen is enabled, opencv headless might cause some issues.
     camera.video_without_preview()
 
 main()
