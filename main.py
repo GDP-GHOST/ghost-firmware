@@ -11,5 +11,8 @@ import motor_manager
 def main():
     controller = motor_manager.Motor()
     controller.open_device()
-
+    print(controller.get_motor_position())
+    # 
+    # controller.set_motor_position(10000, 10000, 20000, 5000)
+    controller.close_device()
 main()
