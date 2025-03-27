@@ -10,9 +10,9 @@ import motor_manager
 
 def main():
     controller = motor_manager.Motor()
-    controller.open_device()
-    print(controller.get_motor_position())
-    # 
-    # controller.set_motor_position(10000, 10000, 20000, 5000)
-    controller.close_device()
+    keyhandle, ret, device_error = controller.connect()
+    if device_error.value == 0:
+        controller.set_profile()
+        success = controller.get_position()
+    controller.close()
 main()
