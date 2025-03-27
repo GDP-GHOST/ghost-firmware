@@ -10,9 +10,16 @@ import motor_manager
 
 def main():
     controller = motor_manager.Motor()
-    keyhandle, ret, device_error = controller.connect()
-    if device_error.value == 0:
-        controller.set_profile()
-        success = controller.get_position()
-    controller.close()
+    keyhandle, ret, device_error, p_error_code = controller.connect()
+    if keyhandle != 0:
+        if device_error.value == 0:
+            ret = controller.set_profile()
+            success = controller.get_position()
+            ret = controller.enable_state()
+            ret = controller.set_position()
+            ret = controller.disable_state()
+            ret = controller.get_position()
+        controller.close()
+    else:
+        print(f'{Messages.ERROR} Could not open COM port. Keyhandle:%8d, Error: %#5.8x' % (keyhandle, p_error_code.value))
 main()
