@@ -35,6 +35,7 @@ class Motor:
             print(f'{Messages.LOG} Error code closing port: %#5.8x' % self.p_error_code.value)
             return
         self.enable_state() # after clearing faults the system goes to disabled, enable again
+        # TODO???? enable the profile again for moving? might be required here or another function
 
 
     def close(self):
@@ -105,9 +106,9 @@ class Motor:
         return ret
 
     def set_position(self, position):
-        ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 0, byref(self.p_error_code))
-        ret = self.check_acknowledgment()
-        ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, -2000, 0, 0, byref(self.p_error_code))
+        # The new position will begin immediately, which is why one of the flag is set to 1
+        # TODO: Change in the future to be configured, for now reduce parameters
+        sucess = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 1, byref(self.p_error_code))
         ret = self.check_acknowledgment()
         return ret
     
