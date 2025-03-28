@@ -8,7 +8,7 @@ epos4 = CDLL(MOTOR_SO)
 
 # TODO: A lot of error handling will be missing form this first iteration of the code, this is
 # just to continue testing stuff in building 32 (our testing location in southampton)
-# Add error codes messages
+# Add error codes messages. Funcitons will return 1 if sucess and 0 if failure
 class Motor:
     def __init__(self):
         self.node_id = 1 # change this later to the constants on file, for now testing
@@ -42,10 +42,10 @@ class Motor:
         self.ret = epos4.VCS_CloseDevice(self.keyhandle, byref(self.p_error_code))
         print(f'{Messages.LOG} Error code closing port: %#5.8x' % self.p_error_code.value)
 
-    def set_profile(self):
+    def set_profile(self, velocity, acceleration, deceleration):
         print(f'{Messages.LOG} Setting profiles')
         ret = epos4.VCS_ActivateProfilePositionMode(self.keyhandle, self.node_id, byref(self.p_error_code))
-        ret = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, 500, 1000, 1000, byref(self.p_error_code))
+        ret = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, velocity, acceleration, deceleration, byref(self.p_error_code)) # 500, 1000, 1000
         return ret
 
     def get_position(self):
@@ -55,11 +55,10 @@ class Motor:
         ret=epos4.VCS_GetPositionIs(self.keyhandle, self.node_id, byref(pPositionIs), byref(pErrorCode))
 
         if ret == 1:
-            print(f'{Messages.LOG} Position Actual Value: %d [inc]' % pPositionIs.value)
-            return 1
+            print(f'{Messages.LOG} Position Actual Value: %d [inc]' % pPositionIs.value) # TODO: Remove this later
+            return pPositionIs.value
         else:
             print(f'{Messages.ERROR} GetPositionIs failed')
-            return 0
 
     def check_acknowledgment(self):
         # From official maxxon documentation this function
@@ -104,13 +103,53 @@ class Motor:
         ret = epos4.VCS_SetDisableState(self.keyhandle, self.node_id, byref(self.p_error_code))
         print(f'{Messages.LOG} Disabled motor')
         return ret
+    
+    def check_position_reached(self):
+        p_target_reached=c_bool()
+        sucess = epos4.VCS_GetMovementState(self.keyhandle, self.node_id, byref(p_target_reached), byref(self.p_error_code))
+        if sucess == 0:
+            print(f'{Messages.ERROR} Failed to acquire GetMovemementState()')
+            quit()
+        return p_target_reached.value # 1 if reached 0 if not
+    
+    def evaluate_error(self):
+        error_info = ' ' * 40
+        if self.p_error_code.value != 0x0:
+            epos4.VCS_GetErrorInfo(self.p_error_code.value, error_info, 40)
+            print('Error Code %#5.8x, description: %s' % (self.p_error_code.value, error_info))
+            return True
+        return False
 
-    def set_position(self, position):
+    def set_position(self, position, timeout):
+        moving = False
         # The new position will begin immediately, which is why one of the flag is set to 1
         # TODO: Change in the future to be configured, for now reduce parameters
-        sucess = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 1, byref(self.p_error_code))
-        ret = self.check_acknowledgment()
-        return ret
+        sucess = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, position, 0, 1, byref(self.p_error_code))
+        if sucess == 0:
+            print(f'{Messages.ERROR} Failed to set motor position.')
+            return 0
+        else:
+            moving = True
+        
+        time = 0
+        while moving:
+            if self.evaluate_error():
+                print(f'{Messages.ERROR} Error during motor set position command')
+                moving = False
+                return 0
+
+            if time >= timeout:
+                moving = False
+                print(f'{Messages.ERROR} timeout motor reaching target')
+                return 0
+            
+            if self.check_position_reached() == 1:
+                moving = False
+                print(f'{Messages.SUCCESS} Reached target') #TODO: remove this print, for now kept for debug
+            
+            time += 1
+            
+        return 1
     
     def test_motor(self):
         ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 0, byref(self.p_error_code))
@@ -118,3 +157,4 @@ class Motor:
         ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, -2000, 0, 0, byref(self.p_error_code))
         ret = self.check_acknowledgment()
         return ret
+    

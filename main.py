@@ -13,10 +13,10 @@ def main():
     keyhandle, ret, device_error, p_error_code = controller.connect()
     if keyhandle != 0:
         if device_error.value == 0:
-            ret = controller.set_profile()
+            ret = controller.set_profile(500, 1000, 1000)
             success = controller.get_position()
             ret = controller.enable_state()
-            ret = controller.test_motor()
+            ret = controller.set_position(10000, 20)
             ret = controller.disable_state()
             ret = controller.get_position()
         controller.close()
