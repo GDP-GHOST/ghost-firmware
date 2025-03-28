@@ -11,3 +11,4 @@ class Messages():
   WARNING = f"{Style.RED}[WARNING]{Style.RESET}"
   SUCCESS = f"{Style.GREEN}[SUCCESS]{Style.RESET}"
   LOG = f"{Style.BLUE}[LOG]{Style.RESET}"
+  DEBUG = f"{Style.YELLOW}[DEBUG]{Style.RESET}"

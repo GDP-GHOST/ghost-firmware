@@ -16,8 +16,133 @@ class Motor:
         self.ret = 0
         self.p_error_code = c_uint()
         self.p_device_error_code = c_uint() # p means pointer, required to handle the stuff being returned from the EPOS library
+        self.moving = False
 
     def connect(self):
+        print(f'{Messages.LOG} Opening Port...')
+        # TODO: (Less Priority) Turn parameters here into constants
+        self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
+
+        if self.keyhandle != 0: # documentation states that anything nonzero is success
+            print(f"{Messages.LOG} Connection established at keyhandle {self.keyhandle}")
+            return 1
+        
+        self.evaluate_error() # if the system throws an error, this functuin should catch it
+        return 0 # 0 is false, then device didnt connect properly, go to error state
+
+    def activate(self):
+        print(f'{Messages.LOG} Activating position mode...')
+        success = epos4.VCS_ActivateProfilePositionMode(self.keyhandle, self.node_id, byref(self.p_error_code))
+        if success != 0:
+            print(f'{Messages.SUCCESS} Activated position mode')
+            return 1
+        self.evaluate_error()
+        return 0
+
+    def configure(self, velocity, acceleration, deceleration, timeout):
+        success = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, 500, 1, 1, byref(self.p_error_code))
+
+        if success != 0:
+            print(f'{Messages.DEBUG} Profile set with a velocity of {velocity} [rpm], acceleration of {acceleration} [rpm] and {deceleration} [rpm]')
+            return 1
+        print("HERE?")
+        self.evaluate_error()
+        return 0
+    
+    def enable(self):
+        enabled = c_bool()
+
+        error = self.check_device_error()
+
+        if error == 1:
+            success = epos4.VCS_SetEnableState(self.keyhandle, self.node_id, byref(self.p_error_code))
+
+            if success != 0:
+                success = epos4.VCS_GetEnableState(self.keyhandle, self.node_id, byref(enabled), byref(self.p_error_code))
+
+                if enabled.value == 1:
+                    print(f'{Messages.SUCCESS} Device enabled')
+                    return 1
+                else:
+                    return 0
+                
+        print(f'{Messages.ERROR} Failed to enable device')
+        return 0
+    
+    def disable(self):
+        disabled = c_bool()
+
+        error = self.check_device_error()
+
+        if error == 1:
+            success = epos4.VCS_SetDisableState(self.keyhandle, self.node_id, byref(self.p_error_code))
+
+            if success != 0:
+                success = epos4.VCS_GetDisableState(self.keyhandle, self.node_id, byref(disabled), byref(self.p_error_code))
+
+                if disabled.value == 1:
+                    print(f'{Messages.SUCCESS} Device disabled')
+                    return 1
+                
+        print(f'{Messages.ERROR} Failed to disable device')
+        return 0
+
+    
+    # absolute and imediately are from maxon documentation. imediately means movement starts instantaneously
+    def set_position(self, target_position, absolute_movement, imediately, timeout):
+        success = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, target_position, absolute_movement, imediately, byref(self.p_error_code))
+
+        if success != 0:
+
+            self.moving = True
+
+            reached = self.check_reached(timeout)
+            if reached:
+                return 1
+            else:
+                print(f'{Messages.WARNING} Failed to reach requested position')
+        else:
+            print(f'{Messages.ERROR} Failed to set position')
+            
+        return 0
+    
+    def check_reached(self, timeout):
+        time_passed = 0
+        p_target_reached = c_bool()
+        while self.moving:
+            if time_passed >= timeout:
+                print(f'{Messages.ERROR} Timeout for motor movement')
+                self.moving = False
+                return 0
+            
+            success = epos4.VCS_GetMovementState(self.keyhandle, self.node_id, byref(p_target_reached), byref(self.p_error_code))
+            if success != 0:
+
+                error = self.evaluate_error()
+
+                if not error:
+                    if p_target_reached.value == 1:
+                        return 1
+                    time_passed += 1
+                    time.sleep(1) # potentially need to find non-blocking ways
+                else:
+                    print(f'{Messages.ERROR} Could not command in movement')
+            else:
+                print(f'{Messages.ERROR} Error using VCS_GetMovementState() function')
+        return 0
+    
+    def check_device_error(self):
+        success = epos4.VCS_GetDeviceErrorCode(self.keyhandle, self.node_id, 1, byref(self.p_device_error_code), byref(self.p_error_code))
+
+        if self.p_device_error_code.value == 0:
+            self.evaluate_error()
+            return 1
+        return 0
+                
+
+
+
+    def connect_old(self):
         print(f'{Messages.LOG} Opening Port...')
         self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
         if self.keyhandle != 0:
@@ -109,7 +234,7 @@ class Motor:
         sucess = epos4.VCS_GetMovementState(self.keyhandle, self.node_id, byref(p_target_reached), byref(self.p_error_code))
         if sucess == 0:
             print(f'{Messages.ERROR} Failed to acquire GetMovemementState()')
-            quit()
+            return 0
         return p_target_reached.value # 1 if reached 0 if not
     
     def evaluate_error(self):
@@ -117,10 +242,10 @@ class Motor:
         if self.p_error_code.value != 0x0:
             epos4.VCS_GetErrorInfo(self.p_error_code.value, error_info, 40)
             print('Error Code %#5.8x, description: %s' % (self.p_error_code.value, error_info))
-            return True
-        return False
+            return 1
+        return 0
 
-    def set_position(self, position, timeout):
+    def set_position_old(self, position, timeout):
         moving = False
         # The new position will begin immediately, which is why one of the flag is set to 1
         # TODO: Change in the future to be configured, for now reduce parameters
@@ -157,4 +282,61 @@ class Motor:
         ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, -2000, 0, 0, byref(self.p_error_code))
         ret = self.check_acknowledgment()
         return ret
+    
+    def demo(self):
+        enabled = True
+        state = State.OPEN
+        while enabled:
+            match state:
+                case State.OPEN:
+                    success = self.connect()
+                    if success:
+                        state = State.ACTIVATE # go to the next state
+                    else:
+                        state = State.ERROR
+                        
+                case State.ACTIVATE:
+                    success = self.activate()
+                    if success:
+                        state = State.CONFIGURE
+                    else:
+                        state = State.ERROR
+                
+                case State.CONFIGURE:
+                    success = self.configure(500, 1000, 1000, 200)
+                    if success:
+                        state = State.ENABLE
+                    else:
+                        print("HI")
+                        state = State.ERROR
+                
+                case State.ENABLE:
+                    success = self.enable()
+                    if success:
+                        state = State.MOVE
+                    else:
+                        state = State.ERROR
+                
+                case State.MOVE:
+                    success = self.set_position(2000, 0, 1, 100)
+                    if success:
+                        state = State.DISABLE
+                    else:
+                        state = State.ERROR
+                
+                case State.DISABLE:
+                    success = self.disable()
+                    if success:
+                        state = State.CLOSE
+                    else:
+                        state = State.ERROR
+
+                case State.CLOSE:
+                    success = self.close()
+                    enabled = False
+
+                case State.ERROR:
+                    print(f'{Messages.ERROR} Error executing demo')
+                    state = State.CLOSE
+
     

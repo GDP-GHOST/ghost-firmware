@@ -18,3 +18,14 @@ class Shapes:
     RECTANGLE = 2
     CIRCLE = 3
     RANDOM = 4
+
+class State:
+    ERROR = -1
+    OPEN = 0
+    ACTIVATE = 1
+    CONFIGURE = 2
+    ENABLE = 3
+    MOVE = 4
+    DISABLE = 5
+    CLOSE = 6
+
