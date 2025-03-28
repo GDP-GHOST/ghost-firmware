@@ -28,7 +28,15 @@ class Motor:
                 print(f'{Messages.ERROR} Motor in error state: %#5.8x' % self.p_device_error_code.value)
                 self.close() #ensure that teh port is closed
         return self.keyhandle, self.ret, self.p_device_error_code, self.p_error_code
-    
+
+    def clear_faults(self):
+        sucess = epos4.VCS_ClearFault(self.keyhandle, self.node_id, byref(self.p_error_code))#attempt to clear errors > sets motor to disable state
+        if sucess == 0: # documnetation states that non-zero is sucess so
+            print(f'{Messages.LOG} Error code closing port: %#5.8x' % self.p_error_code.value)
+            return
+        self.enable_state() # after clearing faults the system goes to disabled, enable again
+
+
     def close(self):
         self.ret = epos4.VCS_CloseDevice(self.keyhandle, byref(self.p_error_code))
         print(f'{Messages.LOG} Error code closing port: %#5.8x' % self.p_error_code.value)
