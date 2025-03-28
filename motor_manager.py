@@ -96,7 +96,14 @@ class Motor:
         print(f'{Messages.LOG} Disabled motor')
         return ret
 
-    def set_position(self):
+    def set_position(self, position):
+        ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 0, byref(self.p_error_code))
+        ret = self.check_acknowledgment()
+        ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, -2000, 0, 0, byref(self.p_error_code))
+        ret = self.check_acknowledgment()
+        return ret
+    
+    def test_motor(self):
         ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, 2000, 0, 0, byref(self.p_error_code))
         ret = self.check_acknowledgment()
         ret = epos4.VCS_MoveToPosition(self.keyhandle, self.node_id, -2000, 0, 0, byref(self.p_error_code))

@@ -16,7 +16,7 @@ def main():
             ret = controller.set_profile()
             success = controller.get_position()
             ret = controller.enable_state()
-            ret = controller.set_position()
+            ret = controller.test_motor()
             ret = controller.disable_state()
             ret = controller.get_position()
         controller.close()
