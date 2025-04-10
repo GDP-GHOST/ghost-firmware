@@ -28,7 +28,7 @@ def main():
     plt.imshow(masks[0], cmap='bone') # cmap bone for black and white images
     plt.show()
 
-    blob_detection_frames = detector.get_blob_detections(frames_to_analyse)
+    #blob_detection_frames = detector.get_blob_detections(frames_to_analyse)
     #camera.create_gif(blob_detection_frames)
 
 main()
