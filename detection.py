@@ -148,12 +148,10 @@ class Detector:
 
         return rgb
     
-    def get_motion_mask(self, flow_mag, motion_thresh = 1, kernel = np.ones((1, 1))):
+    def get_motion_mask(self, flow_mag, motion_thresh = 1, kernel = np.ones((3, 3))):
         motion_mask = np.uint8(flow_mag > motion_thresh)*255
 
         motion_mask = cv.erode(motion_mask, kernel, iterations=1)
-        plt.imshow(motion_mask)
-        plt.show()
         motion_mask = cv.morphologyEx(motion_mask, cv.MORPH_OPEN, kernel, iterations=1)
         motion_mask = cv.morphologyEx(motion_mask, cv.MORPH_CLOSE, kernel, iterations=3)
         

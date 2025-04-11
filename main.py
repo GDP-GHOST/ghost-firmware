@@ -19,7 +19,7 @@ def main():
     
     # Detection stuff
     detector = detection.Detector()
-    frames_to_analyse = frames[298:300]
+    frames_to_analyse = frames[200:202]
     
     flow = detector.flow_computation(frames_to_analyse)
     plt.imshow(frames_to_analyse[0])
