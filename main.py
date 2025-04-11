@@ -22,11 +22,11 @@ def main():
     frames_to_analyse = frames[200:202]
     
     flow = detector.flow_computation(frames_to_analyse)
-    plt.imshow(frames_to_analyse[0])
-    plt.show()
+    # plt.imshow(frames_to_analyse[0])
+    # plt.show()
     magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
-    plt.imshow(np.log(magnitude/magnitude.max()), cmap='hsv_r')
-    plt.show()
+    # plt.imshow(np.log(magnitude/magnitude.max()), cmap='hsv_r')
+    # plt.show()
     print(magnitude.max(), magnitude.min())
 
     rgb = detector.view_flow(flow)
@@ -35,6 +35,14 @@ def main():
     mask = detector.get_motion_mask(magnitude, motion_thresh=motion_threshold)
 
     plt.imshow(mask, cmap='gray')
+    plt.show()
+
+    # plt.imshow(rgb*50) # show noise stuff
+    # plt.show()
+
+    blob_detection = detector.get_blob_detection_opt([mask])
+    print(blob_detection[0].shape)
+    plt.imshow(blob_detection[0])
     plt.show()
 
 

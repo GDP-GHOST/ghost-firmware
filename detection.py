@@ -100,11 +100,12 @@ class Detector:
             x,y,w,h = cv.boundingRect(contour)
             area = w*h
 
-            # print(area)
+            print(area)
             if area > 5: # just abstract number based on the printed areas not sure it works
                 detected.append([x, y, x+w, y+h, area])
         
         detected = np.array(detected)
+        print(len(detected))
         return detected
     
     def get_blob_detections(self, frames):
@@ -157,7 +158,24 @@ class Detector:
         
         return motion_mask
 
-
+    # otpical flow detections
+    def get_blob_detection_opt(self, masks):
+        colored_masks = []
+        for mask in masks:
+            print("Hi")
+            blobs = self.get_contour_blob(mask)
+            #print(blobs)
+            mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
+            for box in blobs:
+                x1,y1,x2,y2,area = box
+                cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
+            colored_masks.append(mask_color)
+        return colored_masks
+    
+    # this function might be abastracting too much but the following work load it follows:
+    # 1 - flow computation
+    def get_movement(self, frames):
+        pass
 
     
 
