@@ -1,2 +1,2 @@
 PARENT_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\ghost-firmware'
-IMAGE_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\Programming\Datasets\ezgif-1-e2bfa5822d-jpg' # Outside repository as mostly used for debug
+IMAGE_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\Observations\Scripts\Frames' # Outside repository as mostly used for debug

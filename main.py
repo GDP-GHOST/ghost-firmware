@@ -31,7 +31,7 @@ def main():
 
     rgb = detector.view_flow(flow)
 
-    motion_threshold = np.c_[np.linspace(0.3, 1, 1080)].repeat(1920, axis=-1)
+    motion_threshold = np.c_[np.linspace(0.3, 1, 800)].repeat(1000, axis=-1)
     mask = detector.get_motion_mask(magnitude, motion_thresh=motion_threshold)
 
     plt.imshow(mask, cmap='gray')
