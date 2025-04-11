@@ -118,6 +118,48 @@ class Detector:
                 cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
             colored_masks.append(mask_color)
         return colored_masks
+    
+    # For now frames cna only be length 2, adding more later
+    def flow_computation(self, frames):
+        gray1 = cv.cvtColor(frames[0], cv.COLOR_BGR2GRAY) # the frames are greyed
+        gray2 = cv.cvtColor(frames[1], cv.COLOR_BGR2GRAY)
+
+        gray1 = cv.GaussianBlur(gray1, dst=None, ksize=(3,3), sigmaX=5)
+        gray2 = cv.GaussianBlur(gray2, dst=None, ksize=(3,3), sigmaX=5)# fblur images
+
+        flow_calc = cv.calcOpticalFlowFarneback(gray1, gray2, None,
+                                            pyr_scale=0.75,
+                                            levels=3,
+                                            winsize=5,
+                                            iterations=3,
+                                            poly_n=10,
+                                            poly_sigma=1.2,
+                                            flags=0)
+        return flow_calc
+    
+    def view_flow(self, flow):
+        hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
+        hsv[..., 1] = 255
+
+        mag, ang = cv.cartToPolar(flow[..., 0], flow[..., 1])
+        hsv[..., 0] = ang*180/np.pi/2
+        hsv[..., 2] = cv.normalize(mag, None, 0, 255, cv.NORM_MINMAX)
+        rgb = cv.cvtColor(hsv, cv.COLOR_HSV2RGB)
+
+        return rgb
+    
+    def get_motion_mask(self, flow_mag, motion_thresh = 1, kernel = np.ones((1, 1))):
+        motion_mask = np.uint8(flow_mag > motion_thresh)*255
+
+        motion_mask = cv.erode(motion_mask, kernel, iterations=1)
+        plt.imshow(motion_mask)
+        plt.show()
+        motion_mask = cv.morphologyEx(motion_mask, cv.MORPH_OPEN, kernel, iterations=1)
+        motion_mask = cv.morphologyEx(motion_mask, cv.MORPH_CLOSE, kernel, iterations=3)
+        
+        return motion_mask
+
+
 
     
 
