@@ -19,10 +19,10 @@ def main():
     
     # Detection stuff
     detector = detection.Detector()
-    frames_to_analyse = frames[10:12]
+    frames_to_analyse = frames[298:300]
     
-    flow = detector.flow_computation(frames)
-    plt.imshow(frames[0])
+    flow = detector.flow_computation(frames_to_analyse)
+    plt.imshow(frames_to_analyse[0])
     plt.show()
     magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
     plt.imshow(np.log(magnitude/magnitude.max()), cmap='hsv_r')
