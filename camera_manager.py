@@ -32,4 +32,4 @@ class Camera:
         gif = []
         for img in frames:
             gif.append(Image.fromarray(img))
-        gif[0].save('detect.gif', save_all=True,optimize=False, append_images=gif[1:], loop=0)
+        gif[0].save('detect_framed.gif', save_all=True,optimize=False, append_images=gif[1:], loop=0)

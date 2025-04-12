@@ -100,12 +100,11 @@ class Detector:
             x,y,w,h = cv.boundingRect(contour)
             area = w*h
 
-            print(area)
+            # print(area)
             if area > 5: # just abstract number based on the printed areas not sure it works
                 detected.append([x, y, x+w, y+h, area])
         
         detected = np.array(detected)
-        print(len(detected))
         return detected
     
     def get_blob_detections(self, frames):
@@ -121,9 +120,9 @@ class Detector:
         return colored_masks
     
     # For now frames cna only be length 2, adding more later
-    def flow_computation(self, frames):
-        gray1 = cv.cvtColor(frames[0], cv.COLOR_BGR2GRAY) # the frames are greyed
-        gray2 = cv.cvtColor(frames[1], cv.COLOR_BGR2GRAY)
+    def flow_computation(self, frame0, frame1):
+        gray1 = cv.cvtColor(frame0, cv.COLOR_BGR2GRAY) # the frames are greyed
+        gray2 = cv.cvtColor(frame1, cv.COLOR_BGR2GRAY)
 
         gray1 = cv.GaussianBlur(gray1, dst=None, ksize=(3,3), sigmaX=5)
         gray2 = cv.GaussianBlur(gray2, dst=None, ksize=(3,3), sigmaX=5)# fblur images
@@ -162,21 +161,58 @@ class Detector:
     def get_blob_detection_opt(self, masks):
         colored_masks = []
         for mask in masks:
-            print("Hi")
             blobs = self.get_contour_blob(mask)
-            #print(blobs)
             mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
             for box in blobs:
+                print("Len at blob", len(blobs))
                 x1,y1,x2,y2,area = box
                 cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
             colored_masks.append(mask_color)
         return colored_masks
     
     # this function might be abastracting too much but the following work load it follows:
-    # 1 - flow computation
-    def get_movement(self, frames):
-        pass
+    # 1 - flow computation through flow_computation()
+    # 2 - Convert from cartesian to polar
+    # 3 - motion threshold calculation (within the function itself)
+    # 4 - get masks using get_motion_masks()
+    def get_movement_mask(self, frames):
+        if len(frames) < 2:
+            print(f'{Messages.ERROR} Not enough frames, need more than 2.')
+            quit()
+        
+        masks = []
+        for i in range(len(frames) - 1):
+            flow = self.flow_computation(frames[i], frames[i+1])
+            magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
+            motion_threshold = np.c_[np.linspace(0.3, 1, 800)].repeat(1000, axis=-1)
+            masks.append(self.get_motion_mask(magnitude, motion_thresh=motion_threshold))
+        blobs = self.get_blob_detection_opt(masks) # TODO: conver this function to singular frames instead
 
+        return blobs
+    
+    def draw_on_frame(self, frame, detections): # detection is just self.get_contour_blob()
+        mark_frame = frame.copy()
+        for detection in detections:
+            x1,y1,x2,y2,area = detection
+            cv.rectangle(mark_frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
+        return mark_frame
+    
+    def get_movement_image(self, frames):
+        if len(frames) < 2:
+            print(f'{Messages.ERROR} Not enough frames, need more than 2.')
+            quit()
+        
+        marked_frames = []
+        for i in range(len(frames) - 1):
+            flow = self.flow_computation(frames[i], frames[i+1])
+            magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
+            motion_threshold = np.c_[np.linspace(0.3, 1, 800)].repeat(1000, axis=-1)
+            mask_on_frame = self.get_motion_mask(magnitude, motion_thresh=motion_threshold)
+            detections = self.get_contour_blob(mask_on_frame)
+            print("Len at image : ",i, i+1, len(detections))
+            mark_frame = self.draw_on_frame(frames[i+1], detections) # The reason why you have multiple red frames is because you are updating frames while going on a loop with it
+            marked_frames.append(mark_frame)
+        return marked_frames
     
 
     

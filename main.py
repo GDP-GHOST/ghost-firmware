@@ -21,7 +21,7 @@ def main():
     detector = detection.Detector()
     frames_to_analyse = frames[200:202]
     
-    flow = detector.flow_computation(frames_to_analyse)
+    flow = detector.flow_computation(frames_to_analyse[0], frames_to_analyse[1])
     # plt.imshow(frames_to_analyse[0])
     # plt.show()
     magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
@@ -44,6 +44,14 @@ def main():
     print(blob_detection[0].shape)
     plt.imshow(blob_detection[0])
     plt.show()
+
+    #blobs = detector.get_movement_mask(frames[:8])
+    framed = detector.get_movement_image(frames)
+    # plt.imshow(blobs[0])
+    # plt.show()
+    plt.imshow(framed[0])
+    plt.show()
+    # camera.create_gif(framed)
 
 
 
