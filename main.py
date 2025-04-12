@@ -46,7 +46,7 @@ def main():
     plt.show()
 
     #blobs = detector.get_movement_mask(frames[:8])
-    framed = detector.get_movement_image(frames)
+    framed = detector.get_movement_image(frames[:8])
     # plt.imshow(blobs[0])
     # plt.show()
     plt.imshow(framed[0])
