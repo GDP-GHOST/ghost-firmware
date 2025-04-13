@@ -194,6 +194,7 @@ class Detector:
         mark_frame = frame.copy()
         for detection in detections:
             x1,y1,x2,y2,area = detection
+            print(f"Coordinate: x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}. Area: {area}")
             cv.rectangle(mark_frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
         return mark_frame
     
@@ -206,10 +207,10 @@ class Detector:
         for i in range(len(frames) - 1):
             flow = self.flow_computation(frames[i], frames[i+1])
             magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
-            motion_threshold = np.c_[np.linspace(0.3, 1, 800)].repeat(1000, axis=-1)
+            motion_threshold = np.c_[np.linspace(0.3, 1, 60)].repeat(60, axis=-1)
             mask_on_frame = self.get_motion_mask(magnitude, motion_thresh=motion_threshold)
             detections = self.get_contour_blob(mask_on_frame)
-            print("Len at image : ",i, i+1, len(detections))
+            print(f"Len at image : {len(detections)} at frames {i} and {i+1}")
             mark_frame = self.draw_on_frame(frames[i+1], detections) # The reason why you have multiple red frames is because you are updating frames while going on a loop with it
             marked_frames.append(mark_frame)
         return marked_frames

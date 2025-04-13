@@ -7,6 +7,10 @@ import time #debug purposes & performance tests
 from PIL import Image
 import numpy as np
 
+from matplotlib import cbook
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes
+
 def main():
     # Camera stuff
     camera = camera_manager.Camera()
@@ -19,7 +23,7 @@ def main():
     
     # Detection stuff
     detector = detection.Detector()
-    frames_to_analyse = frames[200:202]
+    frames_to_analyse = frames[10:12]
     
     flow = detector.flow_computation(frames_to_analyse[0], frames_to_analyse[1])
     # plt.imshow(frames_to_analyse[0])
@@ -31,7 +35,7 @@ def main():
 
     rgb = detector.view_flow(flow)
 
-    motion_threshold = np.c_[np.linspace(0.3, 1, 800)].repeat(1000, axis=-1)
+    motion_threshold = np.c_[np.linspace(0.3, 1, 60)].repeat(60, axis=-1)
     mask = detector.get_motion_mask(magnitude, motion_thresh=motion_threshold)
 
     plt.imshow(mask, cmap='gray')
@@ -46,12 +50,17 @@ def main():
     plt.show()
 
     #blobs = detector.get_movement_mask(frames[:8])
-    framed = detector.get_movement_image(frames[:8])
+    framed = detector.get_movement_image(frames)
     # plt.imshow(blobs[0])
     # plt.show()
-    plt.imshow(framed[0])
+    # plt.imshow(framed[0])
+    # plt.show()
+    #camera.create_gif(framed)
+    plt.imshow(framed[57])
     plt.show()
-    # camera.create_gif(framed)
+
+    zoomed_in = np.zeros((40, 60))
+
 
 
 
