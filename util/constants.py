@@ -1,2 +1,2 @@
 PARENT_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\ghost-firmware'
-IMAGE_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\Observations\Movement Test\frames_merged' # Outside repository as mostly used for debug
+IMAGE_DIRECTORY = r'C:\Users\gianb\Desktop\Personal\Year 5\GDP\Observations\Movement Test\mov_cam\Frames' # Outside repository as mostly used for debug

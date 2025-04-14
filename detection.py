@@ -15,7 +15,7 @@
     Each new version (merged into main) will increase the version counter.
     
     TODO: 
-        - Implement both reference frames moving detection. For now it works only if the camera is fixed.
+        - Implement both reference frames moving detection. For now it works only if the camera is fixed. -> Partially Done
         
 """
 
@@ -28,7 +28,20 @@ from util.messages import *
 
 class Detector:
     def __init__(self):
-        pass
+        self.objects = {} # detections 
+        self.is_motor_moving = False # This is a placeholder
+
+    def get_if_motor_moving(self, frame_id):
+        # FOr now this function is a placeholder with a hard coded frame value. This is for SIMULATION ONLY. The actual system
+        # will use the hardware flag to see if the motor is moving. The main concept is detailed in the architecture in draw.io
+        # essentially the self.objects will not update or add new values while it is moving, or it had detected motion in the previous
+        # 4 frames. While moving, the bounding box will maintain the same size for all TRACKABLE=TRUE objects
+        # Here movement start at frame 13 (FOR THE DATASET ON TEAMS) only. 
+        if frame_id == 14:
+            self.is_motor_moving = True
+        
+        if frame_id == 29:
+            self.is_motor_moving = False
     
     # frame1 and frame2 should be gray images, here the code is written as such frame2 is considered "after" frame and 
     # "frame1" is considered "before". WARNING: Import to get the order right, or else you will get motion going the wrong
@@ -95,14 +108,13 @@ class Detector:
         contours, _ = cv.findContours(frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_TC89_L1)
 
         detected = []
-
         for contour in contours:
             x,y,w,h = cv.boundingRect(contour)
             area = w*h
 
             # print(area)
             if area > 5: # just abstract number based on the printed areas not sure it works
-                detected.append([x, y, x+w, y+h, area])
+                detected.append([x, y, x+w, y+h, area, w, h])
         
         detected = np.array(detected)
         return detected
@@ -165,7 +177,7 @@ class Detector:
             mask_color = cv.cvtColor(mask, cv.COLOR_GRAY2RGB)
             for box in blobs:
                 print("Len at blob", len(blobs))
-                x1,y1,x2,y2,area = box
+                x1,y1,x2,y2,area, w, h = box
                 cv.rectangle(mask_color, (x1, y1), (x2, y2), (255, 0, 0), 1)
             colored_masks.append(mask_color)
         return colored_masks
@@ -190,13 +202,23 @@ class Detector:
 
         return blobs
     
-    def draw_on_frame(self, frame, detections): # detection is just self.get_contour_blob()
+    def draw_on_frame(self, frame, detections, angle): # detection is just self.get_contour_blob()
         mark_frame = frame.copy()
         for detection in detections:
-            x1,y1,x2,y2,area = detection
-            print(f"Coordinate: x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}. Area: {area}")
+            x1,y1,x2,y2,area, w, h = detection #w, h are temporary there MAYBE?
+            print(f"Coordinate: x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}. Area: {area} width {w}, heigh {h}")
             cv.rectangle(mark_frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
+            cx, cy = self.get_centre_pixel(x1, y1, x2, y2)
+            print("Angle: ", self.get_angle(angle, cx, cy))
         return mark_frame
+    
+    def get_centre_pixel(self, x1, y1, x2, y2):
+        cx = (x1 + x2) // 2
+        cy = (y1 + y2) // 2
+        return cx, cy
+    
+    def get_angle(self, angles, x, y):
+        return angles[x][y]
     
     def get_movement_image(self, frames):
         if len(frames) < 2:
@@ -204,16 +226,75 @@ class Detector:
             quit()
         
         marked_frames = []
+        moving_static_dimensions = []
+        prev_distance = -1
+        set_size = False
         for i in range(len(frames) - 1):
+            self.get_if_motor_moving(i)
             flow = self.flow_computation(frames[i], frames[i+1])
             magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
             motion_threshold = np.c_[np.linspace(0.3, 1, 60)].repeat(60, axis=-1)
             mask_on_frame = self.get_motion_mask(magnitude, motion_thresh=motion_threshold)
             detections = self.get_contour_blob(mask_on_frame)
+            if not set_size:
+                moving_static_dimensions = [detections[0][5], detections[0][6]] #width, height
+                set_size = True
+            if self.is_motor_moving:
+                for detection in detections:
+                    x1,y1,x2,y2,area, w, h = detection
+                    if i == 14:
+                        if area < 40:
+                            print(area)
+                            detection[2] = detection[0] + moving_static_dimensions[0]
+                            detection[3] = detection[1] + moving_static_dimensions[1] # dont ask me the logic
+                            detections = [detection]
+                            break
+                    else:
+
+                        if area > 400: # just hardcoded filtering out the bad areas NOT GOOD I KNOW, CHANGING LATER
+                            print(f"Hello set dimensions are {moving_static_dimensions[0]}, {moving_static_dimensions[1]}, old XY: {detection[2]}, {detection[3]}")
+                            detection[2] = detection[0] + moving_static_dimensions[0]
+                            detection[3] = detection[1] + moving_static_dimensions[1] # dont ask me the logic
+                            print(f'New set detection dims: XY: {detection[0]},{detection[1]} to {detection[2]}, {detection[3]}')
+                            detections = [detection]
+                            break
+
             print(f"Len at image : {len(detections)} at frames {i} and {i+1}")
-            mark_frame = self.draw_on_frame(frames[i+1], detections) # The reason why you have multiple red frames is because you are updating frames while going on a loop with it
+            mark_frame = self.draw_on_frame(frames[i+1], detections, angle) # The reason why you have multiple red frames is because you are updating frames while going on a loop with it
             marked_frames.append(mark_frame)
         return marked_frames
+    
+    def calculate_travelled_dist(self):
+        pass
+
+    def calculate_squared_dist(self, prev_position, current_pos):
+        # WARNING: THis function returns squared distance only compare against square distance
+        prev_position = np.array(prev_position)
+        current_pos = np.array(current_pos)
+        dist_squared = np.sum(np.square(prev_position - current_pos))
+        return dist_squared
+    
+        
+    # def get_movement_image(self, frames):
+    #     if len(frames) < 2:
+    #         print(f'{Messages.ERROR} Not enough frames, need more than 2.')
+    #         quit()
+        
+    #     marked_frames = []
+    #     count = 0
+    #     for i in range(len(frames) - 1):
+    #         self.get_if_motor_moving(i)
+    #         flow = self.flow_computation(frames[i], frames[i+1])
+    #         magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
+    #         motion_threshold = np.c_[np.linspace(0.3, 1, 60)].repeat(60, axis=-1)
+    #         mask_on_frame = self.get_motion_mask(magnitude, motion_thresh=motion_threshold)
+    #         detections = self.get_contour_blob(mask_on_frame)
+    #         print(f"Len at image : {len(detections)} at frames {i} and {i+1}")
+    #         mark_frame = self.draw_on_frame(frames[i+1], detections, angle) # The reason why you have multiple red frames is because you are updating frames while going on a loop with it
+    #         marked_frames.append(mark_frame)
+    #     return marked_frames
+
+
     
 
     

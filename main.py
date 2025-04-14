@@ -48,15 +48,14 @@ def main():
     print(blob_detection[0].shape)
     plt.imshow(blob_detection[0])
     plt.show()
-
     #blobs = detector.get_movement_mask(frames[:8])
     framed = detector.get_movement_image(frames)
     # plt.imshow(blobs[0])
     # plt.show()
     # plt.imshow(framed[0])
     # plt.show()
-    #camera.create_gif(framed)
-    plt.imshow(framed[57])
+    camera.create_gif(framed)
+    plt.imshow(framed[14])
     plt.show()
 
     zoomed_in = np.zeros((40, 60))
