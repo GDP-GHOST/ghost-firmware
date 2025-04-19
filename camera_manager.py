@@ -22,18 +22,23 @@ class Camera:
     
     def initialise_camera(self):
         print(f"{Messages.LOG} Initialising the camera")
-        self.camera = cv.VideoCapture(CAMERA_ID) # # WARNING ABOUT THIS NEEDS TO CHMOD the file /dev/video0 with 777 permission
-        print(self.camera.isOpened())
-        if self.camera.isOpened():
-            self.camera_enabled, frame = self.camera.read()
-            print(f"{Messages.SUCCESS} Camera Initialised")
+        if CAMERA_USAGE:
+            self.camera = cv.VideoCapture(CAMERA_ID) # # WARNING ABOUT THIS NEEDS TO CHMOD the file /dev/video0 with 777 permission
+            print(self.camera.isOpened())
+            if self.camera.isOpened():
+                self.camera_enabled, frame = self.camera.read()
+                print(f"{Messages.SUCCESS} Camera Initialised")
+            else:
+                self.camera_enabled = False # if the camera is some reason disabled
+                self.camera.release()
+                self.camera = None
+                cv.destroyAllWindows()
+                print(f"{Messages.ERROR} Camera failed to initialise correctly. Terminating...")
+                return
         else:
-            self.camera_enabled = False # if the camera is some reason disabled
-            self.camera.release()
-            self.camera = None
-            cv.destroyAllWindows()
-            print(f"{Messages.ERROR} Camera failed to initialise correctly. Terminating...")
-            return
+            for file in self.get_file_list():
+                frame = cv.imread(file)
+                self.images.append(frame)
 
     # Gets an ordered list of the files in the folder
     def get_file_list(self):
