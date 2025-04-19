@@ -1,18 +1,18 @@
 import camera_manager
 import detection
-import matplotlib.pylab as plt
 from util.messages import *
 import cv2 as cv
 import time #debug purposes & performance tests
 from PIL import Image
 import numpy as np
+import matplotlib.pylab as plt
 
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes
 
 def main():
-    # Camera stuff
+    # CAMERA TEST TEMPLATE CODE form stakc overflow: 
     camera = camera_manager.Camera()
     camera.initialise()
     before = time.perf_counter() # not the best practice since variable reassigned later, but debug
