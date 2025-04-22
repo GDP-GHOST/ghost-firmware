@@ -56,6 +56,16 @@ class Camera:
             gif.append(Image.fromarray(img))
         gif[0].save('detect_framed.gif', save_all=True,optimize=False, append_images=gif[1:], loop=0)
 
+    def create_video(self, frames): # doesnt work well,m just used ffmpeg instead
+        size = (60, 60) 
+        video_writer = cv.VideoWriter('video_framed.avi',  
+                            cv.VideoWriter_fourcc(*'MJPG'), 
+                            30, size) 
+        video = []
+        for img in frames:
+            video_writer.write(img)
+        video_writer.release()
+
         # WARNING: Only call this function after initialising the camera object through initialise() function
     def preview(self):
         cv.namedWindow("GHOST")

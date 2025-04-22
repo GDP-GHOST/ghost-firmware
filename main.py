@@ -41,8 +41,11 @@ def main():
     plt.imshow(mask, cmap='gray')
     plt.show()
 
-    # plt.imshow(rgb*50) # show noise stuff
-    # plt.show()
+    plt.imshow(rgb*50) # show noise stuff
+    plt.show()
+
+    plt.imshow(angle)
+    plt.show()
 
     blob_detection = detector.get_blob_detection_opt([mask])
     print(blob_detection[0].shape)
@@ -55,7 +58,8 @@ def main():
     # plt.imshow(framed[0])
     # plt.show()
     camera.create_gif(framed)
-    plt.imshow(framed[14])
+    camera.create_video(framed)
+    plt.imshow(framed[10])
     plt.show()
 
     zoomed_in = np.zeros((40, 60))
