@@ -40,14 +40,15 @@ class Motor:
         return 0
 
     def configure(self, velocity, acceleration, deceleration, timeout):
-        success = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, 500, 1, 1, byref(self.p_error_code))
+        success = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, velocity, acceleration, deceleration, byref(self.p_error_code))
+        print("Success in configure: ", success)
 
         if success != 0:
             print(f'{Messages.DEBUG} Profile set with a velocity of {velocity} [rpm], acceleration of {acceleration} [rpm] and {deceleration} [rpm]')
             return 1
         print("HERE?")
         self.evaluate_error()
-        return 0
+        return 0 # fixed by making sure it matches epos software
     
     def enable(self):
         enabled = c_bool()
@@ -171,6 +172,7 @@ class Motor:
         print(f'{Messages.LOG} Setting profiles')
         ret = epos4.VCS_ActivateProfilePositionMode(self.keyhandle, self.node_id, byref(self.p_error_code))
         ret = epos4.VCS_SetPositionProfile(self.keyhandle, self.node_id, velocity, acceleration, deceleration, byref(self.p_error_code)) # 500, 1000, 1000
+        print("Sucess at set_profile: ", ret)
         return ret
 
     def get_position(self):
@@ -303,7 +305,7 @@ class Motor:
                         state = State.ERROR
                 
                 case State.CONFIGURE:
-                    success = self.configure(500, 1000, 1000, 200)
+                    success = self.configure(1, 1, 1, 200)
                     if success:
                         state = State.ENABLE
                     else:
