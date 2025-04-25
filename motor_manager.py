@@ -125,6 +125,7 @@ class Motor:
                     if p_target_reached.value == 1:
                         return 1
                     time_passed += 1
+                    print("Motor position before sleep: ", self.get_position())
                     time.sleep(1) # potentially need to find non-blocking ways
                 else:
                     print(f'{Messages.ERROR} Could not command in movement')
@@ -305,6 +306,7 @@ class Motor:
                         state = State.ERROR
                 
                 case State.CONFIGURE:
+                    # configure parmeters -> velocity, acceleration, deceleration, timeout
                     success = self.configure(1, 1, 1, 200)
                     if success:
                         state = State.ENABLE
@@ -320,13 +322,21 @@ class Motor:
                         state = State.ERROR
                 
                 case State.MOVE:
-                    success = self.set_position(2000, 0, 1, 100)
+                    # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used
+                    print("Position: ", self.get_position())
+                    pProfileVelocity = c_uint()
+                    pProfileAcceleration = c_uint()
+                    pProfileDeceleration = c_uint()
+                    test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
+                    print("Value acceleratioN: ", pProfileVelocity.value)           
+                    success = self.set_position(20, 1, 1, 100)
                     if success:
                         state = State.DISABLE
                     else:
                         state = State.ERROR
                 
                 case State.DISABLE:
+                    print("Position after movement: ", self.get_position())
                     success = self.disable()
                     if success:
                         state = State.CLOSE
