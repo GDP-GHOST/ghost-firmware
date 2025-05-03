@@ -61,6 +61,7 @@ def fix_mirror_position(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
             if change_val_small != n_small_target:
                 #send_small_steps(n_small_target) # Implement small mirror
                 motor2.set_position(n_small_target, 0, 1, 100000000)
+                print("Is this printing every loop? n_small_target: ", n_small_target)
                 change_val_small = n_small_target
 
             # =====  BIG MIRROR  (horizontal correction) ==========
@@ -72,6 +73,7 @@ def fix_mirror_position(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
 
             if change_val_big != n_big_target:
                 success = motor1.set_position(n_big_target, 0, 1, 100000000) # second parameter is relative mode and third is immediately = true
+                print("Big mirro movement: ", n_big_target)
                 change_val_big = n_big_target
         print(f'{Messages.LOG} Finalised target following')
         return True
@@ -127,7 +129,14 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 # test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
                 # print("Value acceleratioN: ", pProfileVelocity.value)           
                 # success = self.set_position(200, 1, 1, 10000000)
+                motor1.set_position(-400, 1, 1, 10000000)
+                time.sleep(5)
+                print("Big Motor starting: ", motor1.get_position())
+                print("Small Motor starting: ", motor2.get_position())
                 success = fix_mirror_position(motor1, motor2)
+                time.sleep(2)
+                print("AFTER Big Motor starting: ", motor1.get_position())
+                print("AFTER Small Motor starting: ", motor2.get_position())
                 if success1 and success2:
                     state = State.DISABLE
                 else:
@@ -152,13 +161,92 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 print(f'{Messages.ERROR} Error executing demo')
                 state = State.CLOSE
 
+def state_machine_callibrate(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
+    enabled = True
+    state = State.OPEN
+    while enabled:
+        match state:
+            case State.OPEN:
+                success1 = motor1.connect()
+                success2 = motor2.connect()
+                if success1 and success2:
+                    state = State.ACTIVATE # go to the next state
+                else:
+                    print(f'{Messages.ERROR} Motor failed connect [motor1, motor2] {success1, success2}')
+                    state = State.ERROR
+                    
+            case State.ACTIVATE:
+                success1 = motor1.activate()
+                success2 = motor2.activate()
+                if success1 and success2:
+                    state = State.CONFIGURE
+                else:
+                    print(f'{Messages.ERROR} Motor failed activate [motor1, motor2] {success1, success2}')
+                    state = State.ERROR
+            
+            case State.CONFIGURE:
+                # configure parmeters -> velocity, acceleration, deceleration, timeout
+                success1 = motor1.configure(1, 1, 1, 20000000)
+                success2 = motor2.configure(1, 1, 1, 20000000)
+                if success1 and success2:
+                    state = State.ENABLE
+                else:
+                    print(f'{Messages.ERROR} Motor failed configure [motor1, motor2] {success1, success2}')
+                    state = State.ERROR
+            
+            case State.ENABLE:
+                success1 = motor1.enable()
+                success2 = motor2.enable()
+                if success1 and success2:
+                    state = State.MOVE
+                else:
+                    print(f'{Messages.ERROR} Motor failed enable [motor1, motor2] {success1, success2}')
+                    state = State.ERROR
+            
+            case State.MOVE:
+                # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used
+                # print("Position: ", self.get_position())
+                # pProfileVelocity = c_uint()
+                # pProfileAcceleration = c_uint()
+                # pProfileDeceleration = c_uint()
+                # test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
+                # print("Value acceleratioN: ", pProfileVelocity.value)           
+                # success = self.set_position(200, 1, 1, 10000000)
+                motor1.set_position(512, 1, 1, 10000000)
+                motor2.set_position(400, 1, 1, 10000000)
+
+                if success1 and success2:
+                    state = State.DISABLE
+                else:
+                    state = State.ERROR
+            
+            case State.DISABLE:
+                print("Position after movement: ", motor1.get_position())
+                time.sleep(200)
+                success1 = motor1.disable()
+                success2 = motor2.disable()
+                if success1 and success2:
+                    state = State.CLOSE
+                else:
+                    print(f'{Messages.ERROR} Motor failed disable [motor1, motor2] {success1, success2}')
+                    state = State.ERROR
+
+            case State.CLOSE:
+                success = motor1.close()
+                success = motor2.close()
+                enabled = False
+
+            case State.ERROR:
+                print(f'{Messages.ERROR} Error executing demo')
+                state = State.CLOSE
+
 def main():
     controller1 = motor_manager.Motor(1, b'USB1')
     controller2 = motor_manager.Motor(29, b'USB0')
 
     # observation motor1 is big motor and motor2 is small motor
     
-
-    state_machine(controller1, controller2)
+    # state_machine(controller1, controller2)
+    state_machine_callibrate(controller1, controller2)
 
 main()

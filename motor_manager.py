@@ -332,13 +332,14 @@ class Motor:
                     pProfileDeceleration = c_uint()
                     test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
                     print("Value acceleratioN: ", pProfileVelocity.value)           
-                    success = self.set_position(-400, 1, 1, 10000000)
+                    success = self.set_position(512, 1, 1, 10000000)
                     if success:
                         state = State.DISABLE
                     else:
                         state = State.ERROR
                 
                 case State.DISABLE:
+                    time.sleep(20)
                     print("Position after movement: ", self.get_position())
                     success = self.disable()
                     if success:
@@ -469,7 +470,8 @@ class Motor:
                     # test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
                     # print("Value acceleratioN: ", pProfileVelocity.value)           
                     # success = self.set_position(200, 1, 1, 10000000)
-                    self.fix_mirror_position()
+                    #self.fix_mirror_position()
+                    self.set_position(400, 1, 1, 10000000)
                     if success:
                         state = State.DISABLE
                     else:
@@ -491,3 +493,134 @@ class Motor:
                     print(f'{Messages.ERROR} Error executing demo')
                     state = State.CLOSE
     
+    def big_mirror(self):
+            enabled = True
+            state = State.OPEN
+            while enabled:
+                match state:
+                    case State.OPEN:
+                        success = self.connect()
+                        if success:
+                            state = State.ACTIVATE # go to the next state
+                        else:
+                            state = State.ERROR
+                            
+                    case State.ACTIVATE:
+                        success = self.activate()
+                        if success:
+                            state = State.CONFIGURE
+                        else:
+                            state = State.ERROR
+                    
+                    case State.CONFIGURE:
+                        # configure parmeters -> velocity, acceleration, deceleration, timeout
+                        success = self.configure(1, 1, 1, 20000000)
+                        if success:
+                            state = State.ENABLE
+                        else:
+                            print("HI")
+                            state = State.ERROR
+                    
+                    case State.ENABLE:
+                        success = self.enable()
+                        if success:
+                            state = State.MOVE
+                        else:
+                            state = State.ERROR
+                    
+                    case State.MOVE:
+                        # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used in config
+                        print("Position: ", self.get_position())
+                        pProfileVelocity = c_uint()
+                        pProfileAcceleration = c_uint()
+                        pProfileDeceleration = c_uint()
+                        test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
+                        print("Value acceleratioN: ", pProfileVelocity.value)           
+                        success = self.set_position(512, 1, 1, 10000000)
+                        if success:
+                            state = State.DISABLE
+                        else:
+                            state = State.ERROR
+                    
+                    case State.DISABLE:
+                        time.sleep(20)
+                        print("Position after movement: ", self.get_position())
+                        success = self.disable()
+                        if success:
+                            state = State.CLOSE
+                        else:
+                            state = State.ERROR
+
+                    case State.CLOSE:
+                        success = self.close()
+                        enabled = False
+
+                    case State.ERROR:
+                        print(f'{Messages.ERROR} Error executing demo')
+                        state = State.CLOSE
+        
+    def small_mirror(self):
+        enabled = True
+        state = State.OPEN
+        while enabled:
+            match state:
+                case State.OPEN:
+                    success = self.connect()
+                    if success:
+                        state = State.ACTIVATE # go to the next state
+                    else:
+                        state = State.ERROR
+                        
+                case State.ACTIVATE:
+                    success = self.activate()
+                    if success:
+                        state = State.CONFIGURE
+                    else:
+                        state = State.ERROR
+                
+                case State.CONFIGURE:
+                    # configure parmeters -> velocity, acceleration, deceleration, timeout
+                    success = self.configure(1, 1, 1, 20000000)
+                    if success:
+                        state = State.ENABLE
+                    else:
+                        print("HI")
+                        state = State.ERROR
+                
+                case State.ENABLE:
+                    success = self.enable()
+                    if success:
+                        state = State.MOVE
+                    else:
+                        state = State.ERROR
+                
+                case State.MOVE:
+                    # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used in config
+                    print("Position: ", self.get_position())
+                    pProfileVelocity = c_uint()
+                    pProfileAcceleration = c_uint()
+                    pProfileDeceleration = c_uint()
+                    test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
+                    print("Value acceleratioN: ", pProfileVelocity.value)           
+                    success = self.set_position(300, 1, 1, 10000000)
+                    if success:
+                        state = State.DISABLE
+                    else:
+                        state = State.ERROR
+                
+                case State.DISABLE:
+                    time.sleep(20)
+                    print("Position after movement: ", self.get_position())
+                    success = self.disable()
+                    if success:
+                        state = State.CLOSE
+                    else:
+                        state = State.ERROR
+
+                case State.CLOSE:
+                    success = self.close()
+                    enabled = False
+
+                case State.ERROR:
+                    print(f'{Messages.ERROR} Error executing demo')
+                    state = State.CLOSE

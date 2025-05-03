@@ -9,9 +9,12 @@ from util.constants import *
 import motor_manager
 
 def main():
-    controller = motor_manager.Motor()
+    motor1 = motor_manager.Motor(1, b'USB1')
+    motor2 = motor_manager.Motor(29, b'USB0')
     # controller.get_position()
-    controller.recorded_track()
+    motor1.big_mirror()
+    print("Big Mirror Finished")
+    motor2.small_mirror()
     # keyhandle, ret, device_error, p_error_code = controller.connect_old()
     # if keyhandle != 0:
     #     if device_error.value == 0:
