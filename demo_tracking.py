@@ -157,6 +157,7 @@ def main():
     controller2 = motor_manager.Motor(29, b'USB0')
 
     # observation motor1 is big motor and motor2 is small motor
+    
 
     state_machine(controller1, controller2)
 
