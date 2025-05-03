@@ -93,7 +93,7 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
             case State.ACTIVATE:
                 success1 = motor1.activate()
                 success2 = motor2.activate()
-                if success and success2:
+                if success1 and success2:
                     state = State.CONFIGURE
                 else:
                     print(f'{Messages.ERROR} Motor failed activate [motor1, motor2] {success1, success2}')
@@ -103,7 +103,7 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 # configure parmeters -> velocity, acceleration, deceleration, timeout
                 success1 = motor1.configure(1, 1, 1, 20000000)
                 success2 = motor2.configure(1, 1, 1, 20000000)
-                if success:
+                if success1 and success2:
                     state = State.ENABLE
                 else:
                     print(f'{Messages.ERROR} Motor failed configure [motor1, motor2] {success1, success2}')
@@ -112,7 +112,7 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
             case State.ENABLE:
                 success1 = motor1.enable()
                 success2 = motor2.enable()
-                if success:
+                if success1 and success2:
                     state = State.MOVE
                 else:
                     print(f'{Messages.ERROR} Motor failed enable [motor1, motor2] {success1, success2}')
@@ -128,7 +128,7 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 # print("Value acceleratioN: ", pProfileVelocity.value)           
                 # success = self.set_position(200, 1, 1, 10000000)
                 success = fix_mirror_position(motor1, motor2)
-                if success:
+                if success1 and success2:
                     state = State.DISABLE
                 else:
                     state = State.ERROR
@@ -137,7 +137,7 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 print("Position after movement: ", motor1.get_position())
                 success1 = motor1.disable()
                 success2 = motor2.disable()
-                if success:
+                if success1 and success2:
                     state = State.CLOSE
                 else:
                     print(f'{Messages.ERROR} Motor failed disable [motor1, motor2] {success1, success2}')
@@ -153,8 +153,8 @@ def state_machine(motor1:motor_manager.Motor, motor2:motor_manager.Motor):
                 state = State.CLOSE
 
 def main():
-    controller1 = motor_manager.Motor(1)
-    controller2 = motor_manager.Motor(29)
+    controller1 = motor_manager.Motor(1, b'USB1')
+    controller2 = motor_manager.Motor(29, b'USB0')
 
     # observation motor1 is big motor and motor2 is small motor
 

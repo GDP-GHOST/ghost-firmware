@@ -11,8 +11,9 @@ epos4 = CDLL(MOTOR_SO)
 # just to continue testing stuff in building 32 (our testing location in southampton)
 # Add error codes messages. Funcitons will return 1 if sucess and 0 if failure
 class Motor:
-    def __init__(self, node_id):
+    def __init__(self, node_id, usb):
         self.node_id = node_id # change this later to the constants on file, for now testing
+        self.usb = usb
         self.keyhandle = 0
         self.ret = 0
         self.p_error_code = c_uint()
@@ -22,8 +23,8 @@ class Motor:
     def connect(self):
         print(f'{Messages.LOG} Opening Port...')
         # TODO: (Less Priority) Turn parameters here into constants
-        # self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
-        self.keyhandle = epos4.VCS_OpenDeviceDlg(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
+        self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', self.usb, byref(self.p_error_code))
+        #self.keyhandle = epos4.VCS_OpenDeviceDlg(byref(self.p_error_code))
 
         if self.keyhandle != 0: # documentation states that anything nonzero is success
             print(f"{Messages.LOG} Connection established at keyhandle {self.keyhandle}")
