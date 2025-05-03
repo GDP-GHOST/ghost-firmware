@@ -2,6 +2,7 @@ from ctypes import *
 from util.constants import *
 from util.messages import *
 import time
+import math
 cdll.LoadLibrary(MOTOR_SO)
 epos4 = CDLL(MOTOR_SO)
 
@@ -10,8 +11,8 @@ epos4 = CDLL(MOTOR_SO)
 # just to continue testing stuff in building 32 (our testing location in southampton)
 # Add error codes messages. Funcitons will return 1 if sucess and 0 if failure
 class Motor:
-    def __init__(self):
-        self.node_id = 1 # change this later to the constants on file, for now testing
+    def __init__(self, node_id):
+        self.node_id = node_id # change this later to the constants on file, for now testing
         self.keyhandle = 0
         self.ret = 0
         self.p_error_code = c_uint()
@@ -21,7 +22,8 @@ class Motor:
     def connect(self):
         print(f'{Messages.LOG} Opening Port...')
         # TODO: (Less Priority) Turn parameters here into constants
-        self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
+        # self.keyhandle = epos4.VCS_OpenDevice(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
+        self.keyhandle = epos4.VCS_OpenDeviceDlg(b'EPOS4', b'MAXON SERIAL V2', b'USB', b'USB0', byref(self.p_error_code))
 
         if self.keyhandle != 0: # documentation states that anything nonzero is success
             print(f"{Messages.LOG} Connection established at keyhandle {self.keyhandle}")
@@ -111,7 +113,7 @@ class Motor:
         time_passed = 0
         p_target_reached = c_bool()
         while self.moving:
-            if time_passed >= timeout:
+            if time_passed >= timeout: #TODO: This doesnt have a certain control of how many in the loop, add in future
                 print(f'{Messages.ERROR} Timeout for motor movement')
                 self.moving = False
                 return 0
@@ -125,8 +127,8 @@ class Motor:
                     if p_target_reached.value == 1:
                         return 1
                     time_passed += 1
-                    print("Motor position before sleep: ", self.get_position())
-                    time.sleep(1) # potentially need to find non-blocking ways
+                    print("Motor position before sleep (SLEEP REMOVED): ", self.get_position())
+                    #time.sleep(1) # potentially need to find non-blocking ways
                 else:
                     print(f'{Messages.ERROR} Could not command in movement')
             else:
@@ -307,7 +309,7 @@ class Motor:
                 
                 case State.CONFIGURE:
                     # configure parmeters -> velocity, acceleration, deceleration, timeout
-                    success = self.configure(1, 1, 1, 200)
+                    success = self.configure(1, 1, 1, 20000000)
                     if success:
                         state = State.ENABLE
                     else:
@@ -322,14 +324,14 @@ class Motor:
                         state = State.ERROR
                 
                 case State.MOVE:
-                    # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used
+                    # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used in config
                     print("Position: ", self.get_position())
                     pProfileVelocity = c_uint()
                     pProfileAcceleration = c_uint()
                     pProfileDeceleration = c_uint()
                     test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
                     print("Value acceleratioN: ", pProfileVelocity.value)           
-                    success = self.set_position(200, 1, 1, 100)
+                    success = self.set_position(-400, 1, 1, 10000000)
                     if success:
                         state = State.DISABLE
                     else:
@@ -351,4 +353,140 @@ class Motor:
                     print(f'{Messages.ERROR} Error executing demo')
                     state = State.CLOSE
 
+    ####### DEMO Saturday (03/05/2025)
+    def fix_mirror_position(self):
+        # function to fix the big and small mirror position to go according the tracked distance
+        # will create a BLOCKING (using sleep) loop for 60 fps
+
+        a, b = 0.029315, 3.948505           # y(θ) parameters (metres)
+        c, d = 2.93475, 0.71435             # x(θ) parameters (metres)
+
+        v_obj = 0.0925                # m s⁻¹ downward
+        H_screen = 3.772                 # m screen height
+        T_RUN = H_screen / v_obj      # 40.8 s sweep
+
+        N_SMALL = 94                    # small‑mirror steps top→bottom
+
+        Kx = 90 / 7.28             # 12.3626 screen‑inc per metre
+        X_CENTRE = 45                    # centre of the 0‑90 increment scale
+
+        # ---- pre‑compute anchor angles ---------------------------------
+        theta0 = math.asin(a / b)                 # θ when y=0 m
+        thetaF = math.asin((a - H_screen) / b)    # θ when y=H_screen
+        DTH_PER_STEP = (thetaF - theta0) / N_SMALL
+
+        run_trajectory = True
+        running_time = 40.7
+        # running
+        period = 1.0 / 60.0               # 60 Hz tick  (16 ms)
+        t0     = time.perf_counter()
+        next_tick = t0
+
+        # cumulative step counters that we've *already* issued
+        n_small_cmd = 0
+        n_big_cmd   = 0
+
+        change_val_small = None
+        change_val_big = None
+
+        while run_trajectory:
+            now = time.perf_counter() #60fps timer
+            if now < next_tick:
+                time.sleep(next_tick - now)
+            next_tick += period
+            t = now - t0
+
+            if t >= running_time:
+                run_trajectory = False
+
+            sin_theta = (a - v_obj * t) / b
+            theta     = math.asin(sin_theta)          # + branch
+
+            # =====  SMALL MIRROR  (vertical) ======================
+            n_small_target = round(N_SMALL * (theta - theta0) /
+                                (thetaF - theta0))
+            if change_val_small == None:
+                change_val_small = n_small_target
+
+            if change_val_small != n_small_target:
+                #send_small_steps(n_small_target) # Implement small mirror
+                change_val_small = n_small_target
+
+            # =====  BIG MIRROR  (horizontal correction) ==========
+            x_m       = c + d * math.sqrt(1.0 - sin_theta * sin_theta)
+            x_inc     = Kx * x_m
+            n_big_target = round(X_CENTRE - x_inc)
+            if change_val_big == None:
+                change_val_big = n_big_target
+
+            if change_val_big != n_big_target:
+                success = self.set_position(n_big_target, 0, 1, 100000000) # second parameter is relative mode and third is immediately = true
+                change_val_big = n_big_target
+        print(f'{Messages.LOG} Finalised target following')
+        return True
+
+    def recorded_track(self):
+        enabled = True
+        state = State.OPEN
+        while enabled:
+            match state:
+                case State.OPEN:
+                    success = self.connect()
+                    if success:
+                        state = State.ACTIVATE # go to the next state
+                    else:
+                        state = State.ERROR
+                        
+                case State.ACTIVATE:
+                    success = self.activate()
+                    if success:
+                        state = State.CONFIGURE
+                    else:
+                        state = State.ERROR
+                
+                case State.CONFIGURE:
+                    # configure parmeters -> velocity, acceleration, deceleration, timeout
+                    success = self.configure(1, 1, 1, 20000000)
+                    if success:
+                        state = State.ENABLE
+                    else:
+                        state = State.ERROR
+                
+                case State.ENABLE:
+                    success = self.enable()
+                    if success:
+                        state = State.MOVE
+                    else:
+                        state = State.ERROR
+                
+                case State.MOVE:
+                    # set_position parameters ->target_position, absolute_movement, imediately, timeout. timeout not used
+                    # print("Position: ", self.get_position())
+                    # pProfileVelocity = c_uint()
+                    # pProfileAcceleration = c_uint()
+                    # pProfileDeceleration = c_uint()
+                    # test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
+                    # print("Value acceleratioN: ", pProfileVelocity.value)           
+                    # success = self.set_position(200, 1, 1, 10000000)
+                    self.fix_mirror_position()
+                    if success:
+                        state = State.DISABLE
+                    else:
+                        state = State.ERROR
+                
+                case State.DISABLE:
+                    print("Position after movement: ", self.get_position())
+                    success = self.disable()
+                    if success:
+                        state = State.CLOSE
+                    else:
+                        state = State.ERROR
+
+                case State.CLOSE:
+                    success = self.close()
+                    enabled = False
+
+                case State.ERROR:
+                    print(f'{Messages.ERROR} Error executing demo')
+                    state = State.CLOSE
     

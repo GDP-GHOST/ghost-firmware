@@ -11,7 +11,7 @@ import motor_manager
 def main():
     controller = motor_manager.Motor()
     # controller.get_position()
-    controller.demo()
+    controller.recorded_track()
     # keyhandle, ret, device_error, p_error_code = controller.connect_old()
     # if keyhandle != 0:
     #     if device_error.value == 0:
