@@ -329,7 +329,7 @@ class Motor:
                     pProfileDeceleration = c_uint()
                     test = epos4.VCS_GetPositionProfile(self.keyhandle, self.node_id, pProfileVelocity, pProfileAcceleration, pProfileDeceleration, self.p_error_code)
                     print("Value acceleratioN: ", pProfileVelocity.value)           
-                    success = self.set_position(20, 1, 1, 100)
+                    success = self.set_position(200, 1, 1, 100)
                     if success:
                         state = State.DISABLE
                     else:
